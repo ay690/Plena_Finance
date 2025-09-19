@@ -1,76 +1,99 @@
-import { createSlice, type PayloadAction } from '@reduxjs/toolkit';
+import { createSlice, type PayloadAction } from "@reduxjs/toolkit";
+import { createAsyncThunk } from "@reduxjs/toolkit";
+import type { RootState } from "../store";
 
-export interface PortfolioItem {
+export interface Token {
+  id: string;
+  icon: string;
   name: string;
-  color: string;
-  percentage: string;
-  value: number;
+  symbol: string;
+  price: number;
+  change24h: number;
+  sparklineData: number[];
+  holdings: number;
 }
 
 interface PortfolioState {
-  totalValue: string;
+  tokens: Token[];
   lastUpdated: string;
-  items: PortfolioItem[];
+  isLoading: boolean;
 }
 
 const initialState: PortfolioState = {
-  totalValue: '$10,275.08',
-  lastUpdated: '3:42:12 PM',
-  items: [
-    {
-      name: "Bitcoin (BTC)",
-      color: "text-darktagstag-green-icon",
-      percentage: "21.0%",
-      value: 21.0,
-    },
-    {
-      name: "Ethereum (ETH)",
-      color: "text-darktagstag-purple-icon",
-      percentage: "64.6%",
-      value: 64.6,
-    },
-    {
-      name: "Solana (SOL)",
-      color: "text-blue-400",
-      percentage: "14.4%",
-      value: 14.4,
-    },
-    {
-      name: "Dogecoin (DOGE)",
-      color: "text-[#18c9dc]",
-      percentage: "14.4%",
-      value: 14.4,
-    },
-    {
-      name: "USDC (USDC)",
-      color: "text-orange-400",
-      percentage: "8.2%",
-      value: 8.2,
-    },
-    {
-      name: "Stellar (XLM)",
-      color: "text-rose-400",
-      percentage: "5.8%",
-      value: 5.8,
-    },
-  ],
+  tokens: [],
+  lastUpdated: "-",
+  isLoading: false,
 };
 
+// Async thunk to refresh prices (simulates an API call)
+export const refreshPrices = createAsyncThunk<
+  Token[],
+  void,
+  { state: RootState }
+>("portfolio/refreshPrices", async (_: void, { getState }) => {
+  // simulate latency
+  await new Promise((resolve) => setTimeout(resolve, 800));
+
+  const { tokens } = getState().portfolio;
+  const updated = tokens.map((t) => {
+    // Simulate a price change within +/-5%
+    const deltaPct = (Math.random() * 10 - 5) / 100; // -0.05 .. 0.05
+    const newPrice = Math.max(0, t.price * (1 + deltaPct));
+    const change24h = ((newPrice - t.price) / t.price) * 100;
+
+    const spark = [...t.sparklineData, newPrice];
+    // Keep only the last 7 points to match UI assumption
+    const sparklineData = spark.slice(-7);
+
+    return {
+      ...t,
+      price: newPrice,
+      change24h,
+      sparklineData,
+    } as Token;
+  });
+
+  return updated;
+});
+
 const portfolioSlice = createSlice({
-  name: 'portfolio',
+  name: "portfolio",
   initialState,
   reducers: {
-    updateTotalValue: (state, action: PayloadAction<string>) => {
-      state.totalValue = action.payload;
+    setTokens: (state, action: PayloadAction<Token[]>) => {
+      state.tokens = action.payload;
+      state.lastUpdated = new Date().toLocaleTimeString();
     },
-    updateLastUpdated: (state, action: PayloadAction<string>) => {
-      state.lastUpdated = action.payload;
+    updateHoldings: (
+      state,
+      action: PayloadAction<{ id: string; holdings: number }>
+    ) => {
+      const { id, holdings } = action.payload;
+      const token = state.tokens.find((t) => t.id === id);
+      if (token) {
+        token.holdings = holdings;
+      }
     },
-    updatePortfolioItem: (state, action: PayloadAction<{ index: number; item: PortfolioItem }>) => {
-      state.items[action.payload.index] = action.payload.item;
+    removeToken: (state, action: PayloadAction<string>) => {
+      state.tokens = state.tokens.filter((t) => t.id !== action.payload);
     },
+  },
+  extraReducers: (builder) => {
+    builder
+      .addCase(refreshPrices.pending, (state) => {
+        state.isLoading = true;
+      })
+      .addCase(refreshPrices.fulfilled, (state, action) => {
+        state.tokens = action.payload;
+        state.isLoading = false;
+        state.lastUpdated = new Date().toLocaleTimeString();
+      })
+      .addCase(refreshPrices.rejected, (state) => {
+        state.isLoading = false;
+      });
   },
 });
 
-export const { updateTotalValue, updateLastUpdated, updatePortfolioItem } = portfolioSlice.actions;
+export const { setTokens, updateHoldings, removeToken } =
+  portfolioSlice.actions;
 export default portfolioSlice.reducer;
