@@ -249,8 +249,8 @@ export const WatchlistSection = (): JSX.Element => {
                   <TableCell className="px-6 py-0">
                     <DropdownMenu>
                       <DropdownMenuTrigger asChild>
-                        <Button variant="ghost" className="h-8 w-8 p-0 ">
-                          <MoreHorizontalIcon className="w-[15px] h-[15px] cursor-pointer" />
+                        <Button variant="ghost" className="h-8 w-8 p-0 cursor-pointer">
+                          <MoreHorizontalIcon className="w-[15px] h-[15px]" />
                         </Button>
                       </DropdownMenuTrigger>
                       <DropdownMenuContent
@@ -259,16 +259,16 @@ export const WatchlistSection = (): JSX.Element => {
                       >
                         <DropdownMenuItem
                           onClick={() => handleRemoveToken(token.id)}
-                          className="text-red-400 hover:text-red-300 hover:bg-zinc-700"
+                          className="text-zinc-400 hover:text-red-300 hover:bg-zinc-700 cursor-pointer"
                         >
                           <Edit2Icon className="w-4 h-4 mr-2" />
                           Edit Holdings
                         </DropdownMenuItem>
                         <DropdownMenuItem
                           onClick={() => handleRemoveToken(token.id)}
-                          className="text-red-400 hover:text-red-300 hover:bg-zinc-700"
+                          className="text-red-400 hover:text-red-300 hover:bg-zinc-700 cursor-pointer"
                         >
-                          <TrashIcon className="w-4 h-4 mr-2" />
+                          <TrashIcon className="w-4 h-4 mr-2 text-red-400 " />
                           Remove
                         </DropdownMenuItem>
                       </DropdownMenuContent>
