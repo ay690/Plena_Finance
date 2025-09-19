@@ -47,6 +47,8 @@ export const WatchlistSection = (): JSX.Element => {
     (state) => state.portfolio
   );
 
+  const [editingTokenId, setEditingTokenId] = React.useState<string | null>(null);
+
   React.useEffect(() => {
     if (tokens.length === 0) {
       dispatch(setTokens(mockTokens));
@@ -75,6 +77,10 @@ export const WatchlistSection = (): JSX.Element => {
 
   const handleRemoveToken = (tokenId: string) => {
     dispatch(removeToken(tokenId));
+  };
+
+  const handleEditHoldings = (tokenId: string) => {
+    setEditingTokenId(tokenId);
   };
 
   return (
@@ -235,7 +241,13 @@ export const WatchlistSection = (): JSX.Element => {
                     </div>
                   </TableCell>
                   <TableCell className="px-6 py-0">
-                    <EditableCell tokenId={token.id} value={token.holdings} />
+                    <EditableCell
+                      tokenId={token.id}
+                      value={token.holdings}
+                      isEditing={editingTokenId === token.id}
+                      onSave={() => setEditingTokenId(null)}
+                      onCancel={() => setEditingTokenId(null)}
+                    />
                   </TableCell>
                   <TableCell className="px-6 py-0">
                     <div className="text-zinc-100">
@@ -258,7 +270,7 @@ export const WatchlistSection = (): JSX.Element => {
                         className="bg-zinc-800 border-zinc-700"
                       >
                         <DropdownMenuItem
-                          onClick={() => handleRemoveToken(token.id)}
+                          onClick={() => handleEditHoldings(token.id)}
                           className="text-zinc-400 hover:text-red-300 hover:bg-zinc-700 cursor-pointer"
                         >
                           <Edit2Icon className="w-4 h-4 mr-2" />
