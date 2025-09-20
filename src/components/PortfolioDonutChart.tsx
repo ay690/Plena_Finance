@@ -1,6 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import React from 'react';
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip } from 'recharts';
+
 import { useAppSelector } from '../hooks/redux';
 
 const COLORS = [
@@ -12,15 +13,29 @@ const COLORS = [
   '#fb7185', // rose
 ];
 
-export const PortfolioDonutChart: React.FC = () => {
+type DonutProps = {
+  width?: number | string; // container width, e.g., number in px or '100%'
+  height?: number | string; // container height
+  innerRadius?: number;
+  outerRadius?: number;
+  className?: string;
+};
+
+export const PortfolioDonutChart: React.FC<DonutProps> = ({
+  width = 161,
+  height = 161,
+  innerRadius = 50,
+  outerRadius = 80,
+  className = "",
+}) => {
   const tokens = useAppSelector(state => state.portfolio.tokens);
-  
+
   const portfolioData = tokens?.filter(token => token.holdings > 0)?.map((token, index) => ({
-      name: `${token.name} (${token.symbol})`,
-      value: token.holdings * token.price,
-      percentage: 0, // Will be calculated below
-      color: COLORS[index % COLORS.length],
-    }));
+    name: `${token.name} (${token.symbol})`,
+    value: token.holdings * token.price,
+    percentage: 0, // Will be calculated below
+    color: COLORS[index % COLORS.length],
+  }));
 
   const totalValue = portfolioData.reduce((sum, item) => sum + item.value, 0);
   
@@ -47,7 +62,10 @@ export const PortfolioDonutChart: React.FC = () => {
 
   if (portfolioData.length === 0) {
     return (
-      <div className="w-[161px] h-[161px] flex items-center justify-center">
+      <div
+        className={`flex items-center justify-center ${className}`}
+        style={{ width, height }}
+      >
         <div className="text-zinc-500 text-sm text-center">
           No holdings
         </div>
@@ -56,23 +74,25 @@ export const PortfolioDonutChart: React.FC = () => {
   }
 
   return (
-    <ResponsiveContainer width={161} height={161}>
-      <PieChart>
-        <Pie
-          data={portfolioData}
-          cx="50%"
-          cy="50%"
-          innerRadius={50}
-          outerRadius={80}
-          paddingAngle={2}
-          dataKey="value"
-        >
-          {portfolioData.map((entry, index) => (
-            <Cell key={`cell-${index}`} fill={entry.color} />
-          ))}
-        </Pie>
-        <Tooltip content={<CustomTooltip />} />
-      </PieChart>
-    </ResponsiveContainer>
+    <div className={className} style={{ width, height }}>
+      <ResponsiveContainer width="100%" height="100%">
+        <PieChart>
+          <Pie
+            data={portfolioData}
+            cx="50%"
+            cy="50%"
+            innerRadius={innerRadius}
+            outerRadius={outerRadius}
+            paddingAngle={2}
+            dataKey="value"
+          >
+            {portfolioData.map((entry, index) => (
+              <Cell key={`cell-${index}`} fill={entry.color} />
+            ))}
+          </Pie>
+          <Tooltip content={<CustomTooltip />} />
+        </PieChart>
+      </ResponsiveContainer>
+    </div>
   );
 };

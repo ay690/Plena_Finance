@@ -70,7 +70,7 @@ export const ModalSection: React.FC<ModalProps> = ({
       <div
         ref={containerRef}
         tabIndex={-1}
-        className={`relative z-10 w-full mx-4 rounded-xl border shadow-xl outline-none ${className}`}
+        className={`relative z-10 w-full mx-3 sm:mx-4 rounded-lg sm:rounded-xl border shadow-xl outline-none ${className}`}
         style={{
           maxWidth,
           background: "#1f1f22",
@@ -112,7 +112,7 @@ export const ModalSection: React.FC<ModalProps> = ({
         )}
 
         {/* Body */}
-        <div className={`max-h-[70vh] overflow-y-auto ${contentClassName}`}>{children}</div>
+        <div className={`max-h-[75vh] sm:max-h-[70vh] overflow-y-auto px-4 py-3 ${contentClassName}`}>{children}</div>
 
         {/* Footer */}
         {footer && (

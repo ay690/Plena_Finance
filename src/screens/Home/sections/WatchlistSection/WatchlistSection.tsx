@@ -49,11 +49,30 @@ export const WatchlistSection = (): JSX.Element => {
   const { tokens, lastUpdated, isLoading } = useAppSelector(
     (state) => state.portfolio
   );
-
+ 
   const [editingTokenId, setEditingTokenId] = React.useState<string | null>(null);
   const [isAddModalOpen, setIsAddModalOpen] = React.useState(false);
   const [search, setSearch] = React.useState("");
   const [selectedIds, setSelectedIds] = React.useState<string[]>([]);
+  const [outerRadius, setOuterRadius] = React.useState(75);
+
+React.useEffect(() => {
+  const handleResize = () => {
+    if (window.innerWidth < 768) {
+     
+      setOuterRadius(56);
+    } else if (window.innerWidth >= 820 && window.innerWidth <= 875) {
+       setOuterRadius(60);
+    } else {
+      
+      setOuterRadius(70);
+    }
+  }
+  handleResize();
+  window.addEventListener("resize", handleResize);
+
+  return () => window.removeEventListener("resize", handleResize);
+}, []);
 
   React.useEffect(() => {
     if (tokens.length === 0) {
@@ -66,9 +85,7 @@ export const WatchlistSection = (): JSX.Element => {
     0
   );
 
-  const portfolioData = tokens
-    .filter((token) => token.holdings > 0)
-    .map((token) => ({
+  const portfolioData = tokens?.filter((token) => token.holdings > 0)?.map((token) => ({
       name: `${token.name} (${token.symbol})`,
       value: token.holdings * token.price,
       percentage:
@@ -110,14 +127,14 @@ export const WatchlistSection = (): JSX.Element => {
   );
 
   return (
-    <div className="flex flex-col items-start gap-12 w-full">
+    <div className="flex flex-col items-start gap-6 md:gap-12 w-full">
       <Card className="w-full bg-darkbackgroundsbg-component rounded-xl border-0 relative">
-        <CardContent className="flex items-start gap-[19px] p-6">
-          <div className="flex flex-col items-start justify-between flex-1">
-            <div className="flex flex-col items-start gap-5 flex-1">
-              <div className="text-[#A1A1AA]">Portfolio Total</div>
+        <CardContent className="flex flex-col md:flex-row items-start gap-4 md:gap-[19px] p-4 md:p-6">
+          <div className="flex flex-col items-start justify-between flex-1 w-full">
+            <div className="flex flex-col items-start gap-3 md:gap-5 flex-1 w-full">
+              <div className="text-[#A1A1AA] text-sm md:text-base">Portfolio Total</div>
 
-              <div className="text-white text-6xl">
+              <div className="text-white text-3xl sm:text-4xl md:text-5xl lg:text-6xl">
                 $
                 {portfolioTotal?.toLocaleString(undefined, {
                   minimumFractionDigits: 2,
@@ -125,37 +142,41 @@ export const WatchlistSection = (): JSX.Element => {
                 })}
               </div>
 
-              <div className="flex h-[128px] items-end justify-start w-full gap-2.5">
-                <div className="text-[#A1A1AA]">
+              <div className="flex h-auto md:h-[128px] items-end justify-start w-full gap-2.5">
+                <div className="text-[#A1A1AA] text-sm md:text-base">
                   Last updated: {lastUpdated}
                 </div>
               </div>
             </div>
           </div>
 
-          <div className="flex flex-col items-start gap-5 flex-1">
-            <div className="text-[#A1A1AA] ">Portfolio Breakdown</div>
+          <div className="flex flex-col items-start gap-4 md:gap-5 flex-1 w-full">
+            <div className="text-[#A1A1AA] text-sm md:text-base text-left md:text-left w-full">Portfolio Breakdown</div>
 
-            <div className="flex items-start gap-5 w-full">
-              <PortfolioDonutChart />
-
-              <div className="flex flex-col items-start justify-center gap-4 flex-1">
-                {portfolioData.map((item, index) => (
-                  <div
-                    key={index}
-                    style={{ color: COLORS[index % COLORS.length] }}
-                  >
-                    {item.name}
-                  </div>
-                ))}
+            <div className="flex flex-col md:flex-row items-center md:items-start gap-4 md:gap-5 w-full">
+              <div className="w-32 h-32 sm:w-40 sm:h-40 md:w-56 md:h-56 flex items-center justify-center self-center md:self-auto">
+                <PortfolioDonutChart width="100%" height="100%" innerRadius={32} outerRadius={outerRadius} />
               </div>
 
-              <div className="flex flex-col items-start justify-end gap-4">
-                {portfolioData?.map((item, index) => (
-                  <div key={index} className="text-[#A1A1AA]">
-                    {item.percentage.toFixed(1)}%
-                  </div>
-                ))}
+              <div className="flex flex-row items-start justify-between w-full gap-4">
+                <div className="flex flex-col items-start justify-center gap-2 md:gap-4 flex-1">
+                  {portfolioData.map((item, index) => (
+                    <div
+                      key={index}
+                      style={{ color: COLORS[index % COLORS.length] }}
+                    >
+                      {item.name}
+                    </div>
+                  ))}
+                </div>
+
+                <div className="flex flex-col items-end justify-start gap-2 md:gap-4">
+                  {portfolioData?.map((item, index) => (
+                    <div key={index} className="text-[#A1A1AA]">
+                      {item.percentage.toFixed(1)}%
+                    </div>
+                  ))}
+                </div>
               </div>
             </div>
           </div>
@@ -163,51 +184,54 @@ export const WatchlistSection = (): JSX.Element => {
       </Card>
 
       <div className="flex flex-col items-start gap-4 w-full">
-        <div className="flex items-center gap-3 w-full">
-          <div className="flex items-center gap-1 flex-1">
+        <div className="flex flex-row items-center gap-2 w-full flex-nowrap">
+          <div className="flex items-center gap-1 flex-1 min-w-0">
             <StarIcon className="w-7 h-7" fill="#A9E851" />
-            <div className="text-zinc-400">Watchlist</div>
+            <div className="text-zinc-400 text-lg md:text-xl truncate">Watchlist</div>
           </div>
 
-          <Button
-            variant="ghost"
-            className="px-3 py-2 bg-[#ffffff0a] rounded-md h-auto gap-1.5 hover:scale-110 cursor-pointer"
-            onClick={handleRefreshPrices}
-            disabled={isLoading}
-          >
-            <RefreshCwIcon
-              className={`w-[15px] h-[15px] ${
-                isLoading ? "animate-spin" : "text-zinc-400"
-              }`}
-            />
-            <span className="font-medium text-zinc-100 text-sm [font-family:'Inter',Helvetica] tracking-[0] leading-5 whitespace-nowrap hover:text-zinc-700">
-              {isLoading ? "Refreshing..." : "Refresh Prices"}
-            </span>
-          </Button>
+          <div className="ml-auto flex items-center gap-2 justify-end flex-nowrap">
+            <Button
+              variant="ghost"
+              className="bg-[#ffffff0a] rounded-md hover:scale-110 cursor-pointer flex items-center justify-center gap-1.5 h-8 w-8 p-0 md:h-auto md:w-auto md:px-3 md:py-2"
+              onClick={handleRefreshPrices}
+              disabled={isLoading}
+            >
+              <RefreshCwIcon
+                className={`w-[15px] h-[15px] ${
+                  isLoading ? "animate-spin" : "text-zinc-400"
+                }`}
+              />
+              <span className="hidden md:inline font-medium text-zinc-100 text-sm [font-family:'Inter',Helvetica] tracking-[0] leading-5 whitespace-nowrap hover:text-zinc-700">
+                {isLoading ? "Refreshing..." : "Refresh Prices"}
+              </span>
+            </Button>
 
-          <Button
-            variant="ghost"
-            className="px-3 py-2 bg-[#a9e851] rounded-md shadow-[0px_0px_0px_1px_#1f6619,0px_1px_2px_#1f661966,inset_0px_0.75px_0px_#ffffff33] h-auto gap-1.5 cursor-pointer"
-            onClick={openAddModal}
-          >
-            <PlusIcon className="w-[15px] h-[15px]" />
-            <span className="font-medium text-darkforegroundsfg-on-inverted text-sm [font-family:'Inter',Helvetica] tracking-[0] leading-5 whitespace-nowrap">
-              Add Token
-            </span>
-          </Button>
+            <Button
+              variant="ghost"
+              className="px-3 py-2 bg-[#a9e851] rounded-md shadow-[0px_0px_0px_1px_#1f6619,0px_1px_2px_#1f661966,inset_0px_0.75px_0px_#ffffff33] h-auto gap-1.5 cursor-pointer"
+              onClick={openAddModal}
+            >
+              <PlusIcon className="w-[15px] h-[15px]" />
+              <span className="font-medium text-darkforegroundsfg-on-inverted text-xs sm:text-sm [font-family:'Inter',Helvetica] tracking-[0] leading-5 whitespace-nowrap">
+                Add Token
+              </span>
+            </Button>
+          </div>
         </div>
 
         <div className="flex flex-col items-start w-full rounded-xl overflow-hidden border border-solid border-[#ffffff14]">
-          <Table>
+          <div className="w-full overflow-x-auto">
+          <Table className="min-w-[640px] md:min-w-full">
             <TableHeader className="h-12 bg-zinc-800">
               <TableRow className="border-0">
-                <TableHead className="pl-6 pr-16 py-0 text-zinc-400">
+                <TableHead className="pl-3 md:pl-6 pr-6 md:pr-16 py-0 text-zinc-400">
                   Token
                 </TableHead>
                 <TableHead className="text-zinc-400">Price</TableHead>
-                <TableHead className="text-zinc-400">24h %</TableHead>
-                <TableHead className="text-zinc-400">Sparkline (7d)</TableHead>
-                <TableHead className="text-zinc-400">Holdings</TableHead>
+                <TableHead className="text-zinc-400 hidden md:table-cell">24h %</TableHead>
+                <TableHead className="text-zinc-400 hidden lg:table-cell">Sparkline (7d)</TableHead>
+                <TableHead className="text-zinc-400 hidden md:table-cell">Holdings</TableHead>
                 <TableHead className="text-zinc-400">Value</TableHead>
                 <TableHead className="w-12"></TableHead>
               </TableRow>
@@ -222,7 +246,7 @@ export const WatchlistSection = (): JSX.Element => {
                       : "bg-darkbackgroundsbg-base-hover"
                   } border-0`}
                 >
-                  <TableCell className="px-6 py-0">
+                  <TableCell className="px-3 md:px-6 py-0">
                     <div className="flex items-center gap-3">
                       <div
                         className="w-8 h-8 rounded border-[0.5px] border-solid border-[#ffffff1a]"
@@ -240,7 +264,7 @@ export const WatchlistSection = (): JSX.Element => {
                       </div>
                     </div>
                   </TableCell>
-                  <TableCell className="px-6 py-0">
+                  <TableCell className="px-3 md:px-6 py-0">
                     <div className="text-zinc-400">
                       $
                       {token.price.toLocaleString(undefined, {
@@ -249,7 +273,7 @@ export const WatchlistSection = (): JSX.Element => {
                       })}
                     </div>
                   </TableCell>
-                  <TableCell className="px-6 py-0">
+                  <TableCell className="px-3 md:px-6 py-0 hidden md:table-cell">
                     <div
                       className={` ${
                         token.change24h >= 0 ? "text-green-400" : "text-red-400"
@@ -259,7 +283,7 @@ export const WatchlistSection = (): JSX.Element => {
                       {token.change24h.toFixed(2)}%
                     </div>
                   </TableCell>
-                  <TableCell className="px-6 py-0">
+                  <TableCell className="px-3 md:px-6 py-0 hidden lg:table-cell">
                     <div className="w-20 h-8">
                       <MiniSparkline
                         data={token.sparklineData}
@@ -267,7 +291,7 @@ export const WatchlistSection = (): JSX.Element => {
                       />
                     </div>
                   </TableCell>
-                  <TableCell className="px-6 py-0">
+                  <TableCell className="px-3 md:px-6 py-0 hidden md:table-cell">
                     <EditableCell
                       tokenId={token.id}
                       value={token.holdings}
@@ -276,7 +300,7 @@ export const WatchlistSection = (): JSX.Element => {
                       onCancel={() => setEditingTokenId(null)}
                     />
                   </TableCell>
-                  <TableCell className="px-6 py-0">
+                  <TableCell className="px-3 md:px-6 py-0">
                     <div className="text-zinc-100">
                       $
                       {(token.holdings * token.price).toLocaleString(
@@ -285,7 +309,7 @@ export const WatchlistSection = (): JSX.Element => {
                       )}
                     </div>
                   </TableCell>
-                  <TableCell className="px-6 py-0">
+                  <TableCell className="px-3 md:px-6 py-0">
                     <DropdownMenu>
                       <DropdownMenuTrigger asChild>
                         <Button variant="ghost" className="h-8 w-8 p-0 cursor-pointer">
@@ -317,8 +341,9 @@ export const WatchlistSection = (): JSX.Element => {
               ))}
             </TableBody>
           </Table>
+          </div>
 
-          <div className="flex justify-between items-center p-4 w-full">
+          <div className="flex flex-col gap-3 md:flex-row md:justify-between md:items-center p-4 w-full">
             <div className="inline-flex items-center gap-1 px-2 py-1 rounded-md">
               <div className="text-zinc-400">{Math.min(10, tokens.length)}</div>
               <MinusIcon className="w-[15px] h-[15px]" />
