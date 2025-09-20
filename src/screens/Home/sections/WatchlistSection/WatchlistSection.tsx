@@ -33,6 +33,7 @@ import {
   DropdownMenuTrigger,
 } from "../../../../components/ui/dropdown-menu";
 import { mockTokens } from "@/mockData/mockData";
+import { ModalSection } from "@/screens/Home/sections/ModalSection/ModalSection";
 
 const COLORS = [
   "#10b981", // green
@@ -351,95 +352,93 @@ export const WatchlistSection = (): JSX.Element => {
       </div>
 
       {/* Add Token Modal */}
-      {isAddModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center">
-          <div className="absolute inset-0 bg-black/60" onClick={closeAddModal} />
-          <div className="relative z-10 w-full max-w-xl mx-4 bg-[#1f1f22] border border-[#2a2a2e] rounded-xl shadow-xl">
-            <div className="flex items-center justify-between px-4 py-3 border-b border-[#2a2a2e]">
-              <div className="flex items-center gap-2 flex-1 bg-[#2a2a2e] rounded-md px-3 py-2">
-                <SearchIcon className="w-4 h-4 text-zinc-400" />
-                <input
-                  autoFocus
-                  value={search}
-                  onChange={(e) => setSearch(e.target.value)}
-                  placeholder="Search tokens (e.g., ETH, SOL)…"
-                  className="bg-transparent outline-none text-sm text-zinc-100 placeholder:text-zinc-500 flex-1"
-                />
-              </div>
-            </div>
-            <div className="max-h-80 overflow-y-auto py-1">
-              {filteredCatalog.length === 0 ? (
-                <div className="px-4 py-6 text-center text-zinc-500 text-sm">
-                  No tokens found.
-                </div>
-              ) : (
-                filteredCatalog.map((t) => {
-                  const alreadyAdded = existingIds.has(t.id);
-                  const selected = selectedIds.includes(t.id) || alreadyAdded;
-                  return (
-                    <button
-                      key={t.id}
-                      onClick={() => {
-                        if (alreadyAdded) {
-                          // remove immediately
-                          dispatch(removeToken(t.id));
-                          setSelectedIds((prev) => prev.filter((x) => x !== t.id));
-                        } else {
-                          // add immediately
-                          dispatch(addToken(t as Token));
-                          setSelectedIds((prev) =>
-                            prev.includes(t.id) ? prev : [...prev, t.id]
-                          );
-                        }
-                      }}
-                      className={`w-full text-left px-4 py-3 flex items-center gap-3 hover:bg-[#26262a] ${
-                        selected ? "bg-[#25331c]" : ""
-                      }`}
-                    >
-                      <div
-                        className="w-8 h-8 rounded border-[0.5px] border-solid border-[#ffffff1a]"
-                        style={{ background: `url(${t.icon}) 50% 50% / cover` }}
-                      />
-                      <div className="flex-1">
-                        <div className="text-zinc-100 text-sm">
-                          {t.name} <span className="text-zinc-400">({t.symbol})</span>
-                        </div>
-                      </div>
-                      {/* star + radio indicator */}
-                      <div className="flex items-center gap-2">
-                        <StarIcon
-                          className="w-4 h-4 cursor-pointer"
-                          color={selected ? "#a9e851" : "#52525b"}
-                          fill={selected ? "#a9e851" : "transparent"}
-                        />
-                        {selected ? (
-                          <CircleIcon fill="#a9e851" className="w-5 h-5 text-[#a9e851] cursor-pointer" />
-                        ) : (
-                          <CircleIcon className="w-5 h-5 text-zinc-500 cursor-pointer" />
-                        )}
-                      </div>
-                    </button>
-                  );
-                })
-              )}
-            </div>
-            <div className="px-4 py-3 border-t border-[#2a2a2e] flex justify-end">
-              <Button
-                variant="ghost"
-                className={`px-3 py-2 rounded-md cursor-pointer h-auto gap-1.5 ${
-                  selectedIds.length === 0
-                    ? "bg-[#3a3a3f] text-zinc-500"
-                    : "bg-[#a9e851] text-black"
-                }`}
-                disabled={selectedIds.length === 0}
-                onClick={handleConfirmAdd}
-              >
-                Add to Watchlist
-              </Button>
-            </div>
+      <ModalSection
+        open={isAddModalOpen}
+        onClose={closeAddModal}
+        title={
+          <div className="flex items-center gap-2 flex-1 bg-[#2a2a2e] rounded-md px-3 py-2">
+            <SearchIcon className="w-4 h-4 text-zinc-400" />
+            <input
+              autoFocus
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              placeholder="Search tokens (e.g., ETH, SOL)…"
+              className="bg-transparent outline-none text-sm text-zinc-100 placeholder:text-zinc-500 flex-1"
+            />
           </div>
+        }
+        footer={
+          <Button
+            variant="ghost"
+            className={`px-3 py-2 rounded-md cursor-pointer h-auto gap-1.5 ${
+              selectedIds.length === 0
+                ? "bg-[#3a3a3f] text-zinc-500"
+                : "bg-[#a9e851] text-black"
+            }`}
+            disabled={selectedIds.length === 0}
+            onClick={handleConfirmAdd}
+          >
+            Add to Watchlist
+          </Button>
+        }
+      >
+        <div className="py-1">
+          {filteredCatalog.length === 0 ? (
+            <div className="px-4 py-6 text-center text-zinc-500 text-sm">
+              No tokens found.
+            </div>
+          ) : (
+            filteredCatalog.map((t) => {
+              const alreadyAdded = existingIds.has(t.id);
+              const selected = selectedIds.includes(t.id) || alreadyAdded;
+              return (
+                <button
+                  key={t.id}
+                  onClick={() => {
+                    if (alreadyAdded) {
+                      // remove immediately
+                      dispatch(removeToken(t.id));
+                      setSelectedIds((prev) => prev.filter((x) => x !== t.id));
+                    } else {
+                      // add immediately
+                      dispatch(addToken(t as Token));
+                      setSelectedIds((prev) =>
+                        prev.includes(t.id) ? prev : [...prev, t.id]
+                      );
+                    }
+                  }}
+                  className={`w-full text-left px-4 py-3 flex items-center gap-3 hover:bg-[#26262a] ${
+                    selected ? "bg-[#25331c]" : ""
+                  }`}
+                >
+                  <div
+                    className="w-8 h-8 rounded border-[0.5px] border-solid border-[#ffffff1a]"
+                    style={{ background: `url(${t.icon}) 50% 50% / cover` }}
+                  />
+                  <div className="flex-1">
+                    <div className="text-zinc-100 text-sm">
+                      {t.name} <span className="text-zinc-400">({t.symbol})</span>
+                    </div>
+                  </div>
+                  {/* star + radio indicator */}
+                  <div className="flex items-center gap-2">
+                    <StarIcon
+                      className="w-4 h-4 cursor-pointer"
+                      color={selected ? "#a9e851" : "#52525b"}
+                      fill={selected ? "#a9e851" : "transparent"}
+                    />
+                    {selected ? (
+                      <CircleIcon fill="#a9e851" className="w-5 h-5 text-[#a9e851] cursor-pointer" />
+                    ) : (
+                      <CircleIcon className="w-5 h-5 text-zinc-500 cursor-pointer" />
+                    )}
+                  </div>
+                </button>
+              );
+            })
+          )}
         </div>
-      )}
+      </ModalSection>
     </div>
   );
 };
