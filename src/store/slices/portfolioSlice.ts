@@ -64,6 +64,13 @@ const portfolioSlice = createSlice({
       state.tokens = action.payload;
       state.lastUpdated = new Date().toLocaleTimeString();
     },
+    addToken: (state, action: PayloadAction<Token>) => {
+      const exists = state.tokens.some((t) => t.id === action.payload.id);
+      if (!exists) {
+        state.tokens.push(action.payload);
+        state.lastUpdated = new Date().toLocaleTimeString();
+      }
+    },
     updateHoldings: (
       state,
       action: PayloadAction<{ id: string; holdings: number }>
@@ -94,6 +101,6 @@ const portfolioSlice = createSlice({
   },
 });
 
-export const { setTokens, updateHoldings, removeToken } =
+export const { setTokens, addToken, updateHoldings, removeToken } =
   portfolioSlice.actions;
 export default portfolioSlice.reducer;

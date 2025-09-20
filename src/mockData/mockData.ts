@@ -4,6 +4,8 @@ import btc from "../assets/btc-thumbnail.png";
 import dogeIcon from "../assets/dodge.png";
 import stellarIcon from "../assets/stellar.png";
 import solanaIcon from "../assets/SOL.png";
+import pinIcon from "../assets/pin.png";
+import hypeIcon from "../assets/hyper.png";
 
 export const mockTokens = [
   {
@@ -65,5 +67,36 @@ export const mockTokens = [
     change24h: -2.1,
     sparklineData: [0.125, 0.123, 0.121, 0.119, 0.118, 0.12, 0.12],
     holdings: 2500.0,
+  },
+  // Extra tokens for testing modal selections
+  {
+    id: "hyperliquid",
+    icon: hypeIcon, 
+    name: "Hyperliquid",
+    symbol: "HYPE",
+    price: 15.72,
+    change24h: 1.4,
+    sparklineData: [14.8, 15.0, 15.2, 15.4, 15.6, 15.7, 15.72],
+    holdings: 0,
+  },
+  {
+    id: "pinlink",
+    icon: pinIcon,
+    name: "PinLink",
+    symbol: "PIN",
+    price: 6.23,
+    change24h: -0.6,
+    sparklineData: [6.7, 6.2, 6.15, 6.3, 6.28, 6.25, 6.23],
+    holdings: 0,
+  },
+  {
+    id: "arbitrum",
+    icon: solanaIcon, 
+    name: "Arbitrum",
+    symbol: "ARB",
+    price: 1.12,
+    change24h: 3.2,
+    sparklineData: [1.01, 1.05, 1.08, 1.1, 1.09, 1.11, 1.12],
+    holdings: 0,
   },
 ];
