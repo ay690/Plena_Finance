@@ -88,10 +88,7 @@ React.useEffect(() => {
   const portfolioData = tokens?.filter((token) => token.holdings > 0)?.map((token) => ({
       name: `${token.name} (${token.symbol})`,
       value: token.holdings * token.price,
-      percentage:
-        portfolioTotal > 0
-          ? ((token.holdings * token.price) / portfolioTotal) * 100
-          : 0,
+      percentage: portfolioTotal > 0 ? ((token.holdings * token.price) / portfolioTotal) * 100 : 0,
     }));
 
   const handleRefreshPrices = () => {
