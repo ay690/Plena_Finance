@@ -3,8 +3,11 @@ import logo from "../../../../assets/Logo.png";
 import { ConnectButton } from "@rainbow-me/rainbowkit";
 import walletIcon from "../../../../assets/wallet.png";
 import { motion } from "framer-motion";
+import { Loader2 } from "lucide-react"; 
+import { useAccount } from "wagmi";
 
 export const PortfolioSection = (): JSX.Element => {
+  const { isConnecting } = useAccount();
   return (
     <motion.div
       className="flex w-full h-auto md:h-14 relative items-center gap-2 md:gap-1.5 p-2 md:p-3"
@@ -37,9 +40,22 @@ export const PortfolioSection = (): JSX.Element => {
           <ConnectButton.Custom>
             {({ account, chain, openConnectModal, openAccountModal, mounted }) => {
               const connected = mounted && account && chain;
+              const connecting = isConnecting; 
+
               return (
                 <div>
-                  {connected ? (
+                  {connecting ? (
+                    <motion.button
+                      disabled
+                      className="flex items-center gap-2 bg-[#A9E851] px-4 py-2 rounded-full text-darkforegroundsfg-on-inverted cursor-not-allowed opacity-80"
+                      initial={{ opacity: 0, y: 6 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ duration: 0.25, delay: 0.1 }}
+                    >
+                      <Loader2 className="w-4 h-4 animate-spin" />
+                      <span>Connecting…</span>
+                    </motion.button>
+                  ) : connected ? (
                     <motion.button
                       onClick={openAccountModal}
                       className="flex items-center gap-2 bg-[#A9E851] px-4 py-2 rounded-full text-darkforegroundsfg-on-inverted cursor-pointer"
@@ -77,3 +93,4 @@ export const PortfolioSection = (): JSX.Element => {
     </motion.div>
   );
 };
+
