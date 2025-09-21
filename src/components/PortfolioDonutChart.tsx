@@ -15,8 +15,8 @@ const COLORS = [
 ];
 
 type DonutProps = {
-  width?: number | string; // container width, e.g., number in px or '100%'
-  height?: number | string; // container height
+  width?: number | string; 
+  height?: number | string; 
   innerRadius?: number;
   outerRadius?: number;
   className?: string;
