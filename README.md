@@ -1,6 +1,6 @@
 # Plena Portfolio
 
-Token portfolio dashboard built with React, TypeScript, Vite, and Tailwind CSS. It integrates RainbowKit + Wagmi + Viem for wallet connections across multiple chains, Redux Toolkit for portfolio state, and TanStack Query for async data.
+Token portfolio dashboard built with React, TypeScript, Vite, and Tailwind CSS. It integrates RainbowKit + Wagmi + Viem for wallet connections across multiple chains, Redux Toolkit for portfolio state, Coingecko api integration and TanStack Query for async data.
 
 ## Features
 
