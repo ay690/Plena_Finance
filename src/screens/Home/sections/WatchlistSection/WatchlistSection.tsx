@@ -64,6 +64,21 @@ export const WatchlistSection = (): JSX.Element => {
     { id: string; name: string; symbol: string; thumb?: string }[]
   >([]);
 
+  // Pagination state for watchlist table
+  const [currentPage, setCurrentPage] = React.useState(1);
+  const pageSize = 10;
+  const totalPages = Math.max(1, Math.ceil(tokens.length / pageSize));
+  const startIndex = (currentPage - 1) * pageSize;
+  const endIndex = startIndex + pageSize;
+  const paginatedTokens = tokens.slice(startIndex, endIndex);
+
+  // Keep current page in range when tokens length changes
+  React.useEffect(() => {
+    if (currentPage > totalPages) {
+      setCurrentPage(totalPages);
+    }
+  }, [tokens.length, totalPages, currentPage]);
+
 React.useEffect(() => {
   const handleResize = () => {
     if (window.innerWidth < 768) {
@@ -347,7 +362,7 @@ React.useEffect(() => {
               </TableRow>
             </TableHeader>
             <TableBody className="px-0 py-3">
-              {tokens.map((token, index) => (
+              {paginatedTokens.map((token, index) => (
                 <TableRow
                   key={index}
                   className={`h-12 ${
@@ -455,29 +470,33 @@ React.useEffect(() => {
 
           <div className="flex flex-col gap-3 md:flex-row md:justify-between md:items-center p-4 w-full">
             <div className="inline-flex items-center gap-1 px-2 py-1 rounded-md">
-              <div className="text-zinc-400">{Math.min(10, tokens.length)}</div>
+              <div className="text-zinc-400">{Math.max(0, Math.min(pageSize, tokens.length - startIndex))}</div>
               <MinusIcon className="w-[15px] h-[15px]" />
               <div className="text-zinc-400">
-                {Math.min(10, tokens.length)} of {tokens.length} results
+                {Math.max(0, Math.min(pageSize, tokens.length - startIndex))} of {tokens.length} results
               </div>
             </div>
             <div className="inline-flex items-center justify-end gap-2">
               <div className="px-2 py-1 rounded-md inline-flex items-center justify-center gap-1.5 overflow-hidden">
                 <div className="text-zinc-400">
-                  1 of {Math.ceil(tokens.length / 10)} pages
+                  {currentPage} of {totalPages} pages
                 </div>
               </div>
 
               <Button
                 variant="ghost"
-                className="px-2 py-1 rounded-md shadow-light-buttons-neutral h-auto gap-1.5 cursor-pointer"
+                className={`px-2 py-1 rounded-md shadow-light-buttons-neutral h-auto gap-1.5 ${currentPage === 1 ? "opacity-50 cursor-not-allowed" : "cursor-pointer"}`}
+                disabled={currentPage === 1}
+                onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
               >
                 <div className="text-zinc-600">Prev</div>
               </Button>
 
               <Button
                 variant="ghost"
-                className="px-2 py-1 rounded-md h-auto gap-1.5 cursor-pointer"
+                className={`px-2 py-1 rounded-md h-auto gap-1.5 ${currentPage === totalPages || tokens.length === 0 ? "opacity-50 cursor-not-allowed" : "cursor-pointer"}`}
+                disabled={currentPage === totalPages || tokens.length === 0}
+                onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
               >
                 <div className="text-zinc-400">Next</div>
               </Button>
