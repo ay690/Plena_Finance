@@ -35,6 +35,7 @@ import {
 } from "../../../../components/ui/dropdown-menu";
 import { mockTokens } from "@/mockData/mockData";
 import { ModalSection } from "@/screens/Home/sections/ModalSection/ModalSection";
+import { motion } from "framer-motion";
 
 const COLORS = [
   "#10b981", // green
@@ -278,7 +279,12 @@ export const WatchlistSection = (): JSX.Element => {
     <div className="flex flex-col items-start gap-6 md:gap-12 w-full">
       <Card className="w-full bg-darkbackgroundsbg-component rounded-xl border-0 relative">
         <CardContent className="flex flex-col md:flex-row items-start gap-4 md:gap-[19px] p-4 md:p-6">
-          <div className="flex flex-col items-start justify-between flex-1 w-full">
+          <motion.div
+            className="flex flex-col items-start justify-between flex-1 w-full"
+            initial={{ opacity: 0, x: -12 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ duration: 0.3, ease: [0.22, 1, 0.36, 1] }}
+          >
             <div className="flex flex-col items-start gap-3 md:gap-5 flex-1 w-full">
               <div className="text-[#A1A1AA] text-sm md:text-base">Portfolio Total</div>
 
@@ -296,9 +302,14 @@ export const WatchlistSection = (): JSX.Element => {
                 </div>
               </div>
             </div>
-          </div>
+          </motion.div>
 
-          <div className="flex flex-col items-start gap-4 md:gap-5 flex-1 w-full">
+          <motion.div
+            className="flex flex-col items-start gap-4 md:gap-5 flex-1 w-full"
+            initial={{ opacity: 0, x: 12 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ duration: 0.3, ease: [0.22, 1, 0.36, 1] }}
+          >
             <div className="text-[#A1A1AA] text-sm md:text-base text-left md:text-left w-full">Portfolio Breakdown</div>
 
             <div className="flex flex-col md:flex-row items-center md:items-start gap-4 md:gap-5 w-full">
@@ -309,36 +320,55 @@ export const WatchlistSection = (): JSX.Element => {
               <div className="flex flex-row items-start justify-between w-full gap-4">
                 <div className="flex flex-col items-start justify-center gap-2 md:gap-4 flex-1">
                   {portfolioData.map((item, index) => (
-                    <div
+                    <motion.div
                       key={index}
                       style={{ color: COLORS[index % COLORS.length] }}
+                      initial={{ opacity: 0, x: -6 }}
+                      animate={{ opacity: 1, x: 0 }}
+                      transition={{ duration: 0.25, delay: index * 0.04 }}
                     >
                       {item.name}
-                    </div>
+                    </motion.div>
                   ))}
                 </div>
 
                 <div className="flex flex-col items-end justify-start gap-2 md:gap-4">
                   {portfolioData?.map((item, index) => (
-                    <div key={index} className="text-[#A1A1AA]">
+                    <motion.div
+                      key={index}
+                      className="text-[#A1A1AA]"
+                      initial={{ opacity: 0, x: 6 }}
+                      animate={{ opacity: 1, x: 0 }}
+                      transition={{ duration: 0.25, delay: index * 0.04 + 0.06 }}
+                    >
                       {item.percentage.toFixed(1)}%
-                    </div>
+                    </motion.div>
                   ))}
                 </div>
               </div>
             </div>
-          </div>
+          </motion.div>
         </CardContent>
       </Card>
 
       <div className="flex flex-col items-start gap-4 w-full">
         <div className="flex flex-row items-center gap-2 w-full flex-nowrap">
-          <div className="flex items-center gap-1 flex-1 min-w-0">
+          <motion.div
+            className="flex items-center gap-1 flex-1 min-w-0"
+            initial={{ opacity: 0, x: -10 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ duration: 0.25 }}
+          >
             <StarIcon className="w-7 h-7" fill="#A9E851" />
             <div className="text-zinc-400 text-lg md:text-xl truncate">Watchlist</div>
-          </div>
+          </motion.div>
 
-          <div className="ml-auto flex items-center gap-2 justify-end flex-nowrap">
+          <motion.div
+            className="ml-auto flex items-center gap-2 justify-end flex-nowrap"
+            initial={{ opacity: 0, x: 10 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ duration: 0.25, delay: 0.05 }}
+          >
             <Button
               variant="ghost"
               className="bg-[#ffffff0a] rounded-md hover:scale-110 cursor-pointer flex items-center justify-center gap-1.5 h-8 w-8 p-0 md:h-auto md:w-auto md:px-3 md:py-2"
@@ -365,7 +395,7 @@ export const WatchlistSection = (): JSX.Element => {
                 Add Token
               </span>
             </Button>
-          </div>
+          </motion.div>
         </div>
 
         <div className="flex flex-col items-start w-full rounded-xl overflow-hidden border border-solid border-[#ffffff14]">
@@ -386,13 +416,16 @@ export const WatchlistSection = (): JSX.Element => {
             </TableHeader>
             <TableBody className="px-0 py-3">
               {paginatedTokens.map((token, index) => (
-                <TableRow
+                <motion.tr
                   key={index}
                   className={`h-12 ${
                     index % 2 === 0
                       ? "bg-[#212124]"
                       : "bg-darkbackgroundsbg-base-hover"
-                  } border-0`}
+                  } border-0 hover:bg-muted/50 transition-colors`}
+                  initial={{ opacity: 0, y: 6 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.25, delay: index * 0.03 }}
                 >
                   <TableCell className="px-3 md:px-6 py-0">
                     <div className="flex items-center gap-3">
@@ -484,7 +517,7 @@ export const WatchlistSection = (): JSX.Element => {
                       </DropdownMenuContent>
                     </DropdownMenu>
                   </TableCell>
-                </TableRow>
+                </motion.tr>
               ))}
             </TableBody>
           </Table>

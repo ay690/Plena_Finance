@@ -1,6 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import React from 'react';
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip } from 'recharts';
+import { motion, AnimatePresence } from 'framer-motion';
 
 import { useAppSelector } from '../hooks/redux';
 
@@ -60,39 +61,50 @@ export const PortfolioDonutChart: React.FC<DonutProps> = ({
     return null;
   };
 
-  if (portfolioData.length === 0) {
-    return (
-      <div
-        className={`flex items-center justify-center ${className}`}
-        style={{ width, height }}
-      >
-        <div className="text-zinc-500 text-sm text-center">
-          No holdings
-        </div>
-      </div>
-    );
-  }
-
   return (
     <div className={className} style={{ width, height }}>
-      <ResponsiveContainer width="100%" height="100%">
-        <PieChart>
-          <Pie
-            data={portfolioData}
-            cx="50%"
-            cy="50%"
-            innerRadius={innerRadius}
-            outerRadius={outerRadius}
-            paddingAngle={2}
-            dataKey="value"
+      <AnimatePresence mode="wait">
+        {portfolioData.length === 0 ? (
+          <motion.div
+            key="empty"
+            className="flex items-center justify-center w-full h-full"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.25 }}
           >
-            {portfolioData.map((entry, index) => (
-              <Cell key={`cell-${index}`} fill={entry.color} />
-            ))}
-          </Pie>
-          <Tooltip content={<CustomTooltip />} />
-        </PieChart>
-      </ResponsiveContainer>
+            <div className="text-zinc-500 text-sm text-center">No holdings</div>
+          </motion.div>
+        ) : (
+          <motion.div
+            key="chart"
+            className="w-full h-full"
+            initial={{ opacity: 0, scale: 0.95 }}
+            animate={{ opacity: 1, scale: 1 }}
+            exit={{ opacity: 0, scale: 0.98 }}
+            transition={{ duration: 0.35, ease: [0.22, 1, 0.36, 1] }}
+          >
+            <ResponsiveContainer width="100%" height="100%">
+              <PieChart>
+                <Pie
+                  data={portfolioData}
+                  cx="50%"
+                  cy="50%"
+                  innerRadius={innerRadius}
+                  outerRadius={outerRadius}
+                  paddingAngle={2}
+                  dataKey="value"
+                >
+                  {portfolioData.map((entry, index) => (
+                    <Cell key={`cell-${index}`} fill={entry.color} />
+                  ))}
+                </Pie>
+                <Tooltip content={<CustomTooltip />} />
+              </PieChart>
+            </ResponsiveContainer>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 };
