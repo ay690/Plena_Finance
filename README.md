@@ -10,6 +10,7 @@ Token portfolio dashboard built with React, TypeScript, Vite, and Tailwind CSS. 
 - **Watchlist section** loaded lazily with `React.Suspense` (`src/screens/Home.tsx`).
 - **Charts and UI** using Recharts, Radix UI primitives, and Tailwind CSS.
 - **Modern build**: Vite + React SWC, TypeScript, ESLint, Tailwind v4.
+ - **Market data (CoinGecko)** via public API endpoints with client-side caching.
 
 ## Tech stack
 
@@ -88,6 +89,15 @@ npm run lint
 - **State persistence**: `src/store/store.ts` subscribes to store updates and persists `portfolio.tokens` and `lastUpdated` to `localStorage`.
 - **Code-splitting**: `WatchlistSection` is lazy-loaded via `React.lazy` + `Suspense`.
 - **Alias**: Import using `@/` for paths resolved to `src/`.
+
+## CoinGecko API integration
+
+This app can fetch public crypto market data using the CoinGecko API (no API key required for public endpoints). Use it for prices, market caps, and coin metadata to enrich the portfolio and watchlist.
+
+- Docs: https://www.coingecko.com/en/api/documentation
+- Base URL: https://api.coingecko.com/api/v3
+- Note: Rate limits and terms of use can change. Always check the official docs for the latest limits and attribution requirements.
+
 
 ## Deployment
 
