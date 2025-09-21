@@ -1,13 +1,116 @@
-# React + TypeScript + Vite
+# Plena Portfolio
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+Token portfolio dashboard built with React, TypeScript, Vite, and Tailwind CSS. It integrates RainbowKit + Wagmi + Viem for wallet connections across multiple chains, Redux Toolkit for portfolio state, and TanStack Query for async data.
 
-Currently, two official plugins are available:
+## Features
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+- **Wallet connect (RainbowKit + Wagmi)** with WalletConnect project ID.
+- **Multi-chain support**: Ethereum mainnet, Polygon, Arbitrum, Base, Optimism (`src/wallet/config.ts`).
+- **Portfolio tracking** with persisted state in `localStorage` (`src/store/store.ts`).
+- **Watchlist section** loaded lazily with `React.Suspense` (`src/screens/Home.tsx`).
+- **Charts and UI** using Recharts, Radix UI primitives, and Tailwind CSS.
+- **Modern build**: Vite + React SWC, TypeScript, ESLint, Tailwind v4.
 
-## Expanding the ESLint configuration
+## Tech stack
+
+- **Framework**: React 19 + TypeScript, Vite 7 (`vite.config.ts`, alias `@` → `src/`).
+- **Styling**: Tailwind CSS v4 (`tailwindcss`, `@tailwindcss/vite`), utility helpers (`clsx`, `tailwind-merge`).
+- **State**: Redux Toolkit + React Redux, persisted slice to `localStorage`.
+- **Web3**: RainbowKit, Wagmi, Viem; chains configured in `src/wallet/config.ts`.
+- **Data**: TanStack Query (via `QueryClientProvider` in `src/main.tsx`).
+- **Charts/UI**: Recharts, Radix UI Dropdown Menu, Lucide icons, Framer Motion.
+
+## Project structure
+
+- `index.html` — App mount and script entry.
+- `src/main.tsx` — App bootstrap: Wagmi, RainbowKit, QueryClient, Redux Provider, renders `Home`.
+- `src/screens/Home.tsx` — Main layout; renders `PortfolioSection` and lazy `WatchlistSection`.
+- `src/screens/Home/sections/...` — Feature sections of the Home screen.
+- `src/store/` — Redux store and `portfolioSlice` (persisted to `localStorage`).
+- `src/components/` — UI components (buttons, cards, dropdown-menu, charts, spinner, etc.).
+- `src/wallet/config.ts` — Wagmi + RainbowKit configuration and enabled chains.
+- `src/mockData/` — Mock portfolio/watchlist data.
+- `vite.config.ts` — Vite plugins and path alias.
+- `public/` — Static assets (favicon, etc.).
+
+## Getting started
+
+### Prerequisites
+
+- Node.js 18+ (LTS recommended)
+- npm (project includes `package-lock.json`)
+
+### Installation
+
+```bash
+npm install
+```
+
+### Environment variables
+
+Create a `.env` file at the project root and set:
+
+```bash
+# WalletConnect Project ID (required for RainbowKit/Wagmi)
+VITE_WC_PROJECT_ID=your_walletconnect_project_id
+```
+
+If not provided, the app falls back to `'YOUR_WALLETCONNECT_PROJECT_ID'` (see `src/wallet/config.ts`).
+
+### Development
+
+```bash
+npm run dev
+```
+
+Vite will print a local dev URL. Open it in your browser.
+
+### Type-check, build, and preview
+
+```bash
+# Type-check and build for production
+npm run build
+
+# Preview the production build locally
+npm run preview
+```
+
+### Lint
+
+```bash
+npm run lint
+```
+
+## Key implementation details
+
+- **Wallet setup**: `src/wallet/config.ts` defines `wagmiConfig` using `getDefaultConfig` from RainbowKit, enabling Mainnet, Polygon, Arbitrum, Base, and Optimism with default `http()` transports.
+- **Providers**: `src/main.tsx` composes `WagmiProvider`, `QueryClientProvider`, `RainbowKitProvider`, and Redux `Provider` to render `Home`.
+- **State persistence**: `src/store/store.ts` subscribes to store updates and persists `portfolio.tokens` and `lastUpdated` to `localStorage`.
+- **Code-splitting**: `WatchlistSection` is lazy-loaded via `React.lazy` + `Suspense`.
+- **Alias**: Import using `@/` for paths resolved to `src/`.
+
+## Deployment
+
+This is a static Vite app. Any static host (Netlify, Vercel, GitHub Pages, Cloudflare Pages) will work.
+
+1. Ensure `VITE_WC_PROJECT_ID` is set in your hosting provider’s environment settings.
+2. Build with `npm run build`.
+3. Deploy the `dist/` folder.
+
+## Troubleshooting
+
+- **Wallet modal not opening**: Confirm `VITE_WC_PROJECT_ID` is configured and valid.
+- **Blank screen after build**: Verify static hosting serves the built `dist/` folder and no path base issues.
+- **CORS or chain RPC issues**: Custom RPCs aren’t set—defaults use `http()`; consider configuring custom transports if needed.
+
+## License
+
+This project is licensed under the [MIT License](./LICENSE).
+
+---
+
+## Appendix: Original Vite Template Notes
+ ## Expanding the ESLint configuration
 
 If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
 
