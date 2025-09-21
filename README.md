@@ -10,7 +10,7 @@ Token portfolio dashboard built with React, TypeScript, Vite, and Tailwind CSS. 
 - **Watchlist section** loaded lazily with `React.Suspense` (`src/screens/Home.tsx`).
 - **Charts and UI** using Recharts, Radix UI primitives, and Tailwind CSS.
 - **Modern build**: Vite + React SWC, TypeScript, ESLint, Tailwind v4.
- - **Market data (CoinGecko)** via public API endpoints with client-side caching.
+- **Market data (CoinGecko)** via public API endpoints with client-side caching.
 
 ## Tech stack
 
@@ -64,6 +64,7 @@ yarn dev
 - Open your browser and navigate to http://localhost:5173 to view the application.
 
 ### Prerequisites
+
 - React 19+
 - Node.js 18+ (LTS recommended)
 - npm (project includes `package-lock.json`)
@@ -119,7 +120,6 @@ This app can fetch public crypto market data using the CoinGecko API (no API key
 - Base URL: https://api.coingecko.com/api/v3
 - Note: Rate limits and terms of use can change. Always check the official docs for the latest limits and attribution requirements.
 
-
 ## Deployment
 
 This is a static Vite app. Any static host (Netlify, Vercel, GitHub Pages, Cloudflare Pages) will work.
@@ -141,15 +141,16 @@ This project is licensed under the [MIT License](./LICENSE).
 ---
 
 ## Appendix: Original Vite Template Notes
- ## Expanding the ESLint configuration
+
+## Expanding the ESLint configuration
 
 If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
 
 ```js
 export default defineConfig([
-  globalIgnores(['dist']),
+  globalIgnores(["dist"]),
   {
-    files: ['**/*.{ts,tsx}'],
+    files: ["**/*.{ts,tsx}"],
     extends: [
       // Other configs...
 
@@ -164,40 +165,40 @@ export default defineConfig([
     ],
     languageOptions: {
       parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
+        project: ["./tsconfig.node.json", "./tsconfig.app.json"],
         tsconfigRootDir: import.meta.dirname,
       },
       // other options...
     },
   },
-])
+]);
 ```
 
 You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
 
 ```js
 // eslint.config.js
-import reactX from 'eslint-plugin-react-x'
-import reactDom from 'eslint-plugin-react-dom'
+import reactX from "eslint-plugin-react-x";
+import reactDom from "eslint-plugin-react-dom";
 
 export default defineConfig([
-  globalIgnores(['dist']),
+  globalIgnores(["dist"]),
   {
-    files: ['**/*.{ts,tsx}'],
+    files: ["**/*.{ts,tsx}"],
     extends: [
       // Other configs...
       // Enable lint rules for React
-      reactX.configs['recommended-typescript'],
+      reactX.configs["recommended-typescript"],
       // Enable lint rules for React DOM
       reactDom.configs.recommended,
     ],
     languageOptions: {
       parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
+        project: ["./tsconfig.node.json", "./tsconfig.app.json"],
         tsconfigRootDir: import.meta.dirname,
       },
       // other options...
     },
   },
-])
+]);
 ```
