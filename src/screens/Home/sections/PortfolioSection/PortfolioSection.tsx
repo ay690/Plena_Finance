@@ -28,9 +28,9 @@ export const PortfolioSection = (): JSX.Element => {
                   {connected ? (
                     <button
                       onClick={openAccountModal}
-                      className="flex items-center gap-2 bg-white/10 px-4 py-2 rounded-full text-white hover:bg-white/20 hover:scale-110 transition cursor-pointer"
+                      className="flex items-center gap-2 bg-[#A9E851] px-4 py-2 rounded-full text-darkforegroundsfg-on-inverted hover:scale-110 transition cursor-pointer"
                     >
-                      <img src={walletIcon} alt="Wallet" className="w-5 h-5" />
+                      <img src={walletIcon} alt="Wallet" className="w-4 h-4" />
                       <span className="truncate max-w-[100px]">
                         {account.displayName}
                       </span>
@@ -40,7 +40,7 @@ export const PortfolioSection = (): JSX.Element => {
                       onClick={openConnectModal}
                       className="flex items-center gap-2 bg-[#A9E851] px-4 py-2 rounded-full text-darkforegroundsfg-on-inverted hover:scale-110 transition cursor-pointer"
                     >
-                      <img src={walletIcon} alt="Wallet" className="w-5 h-5" />
+                      <img src={walletIcon} alt="Wallet" className="w-4 h-4" />
                       <span>Connect Wallet</span>
                     </button>
                   )}
