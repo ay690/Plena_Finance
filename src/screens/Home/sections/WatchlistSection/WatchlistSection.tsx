@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import {
   MinusIcon,
   MoreHorizontalIcon,
@@ -44,6 +45,16 @@ const COLORS = [
   "#fb7185", // rose
 ];
 
+// Small reusable debounce hook
+function useDebounce<T>(value: T, delay = 500) {
+  const [debounced, setDebounced] = React.useState(value);
+  React.useEffect(() => {
+    const id = window.setTimeout(() => setDebounced(value), delay);
+    return () => window.clearTimeout(id);
+  }, [value, delay]);
+  return debounced;
+}
+
 export const WatchlistSection = (): JSX.Element => {
   const dispatch = useAppDispatch();
   const { tokens, lastUpdated, isLoading } = useAppSelector(
@@ -53,6 +64,7 @@ export const WatchlistSection = (): JSX.Element => {
   const [editingTokenId, setEditingTokenId] = React.useState<string | null>(null);
   const [isAddModalOpen, setIsAddModalOpen] = React.useState(false);
   const [search, setSearch] = React.useState("");
+  const debouncedSearch = useDebounce(search, 500); // 500ms debounce
   const [selectedIds, setSelectedIds] = React.useState<string[]>([]);
   const [outerRadius, setOuterRadius] = React.useState(75);
   const [searchLoading, setSearchLoading] = React.useState(false);
@@ -64,7 +76,7 @@ export const WatchlistSection = (): JSX.Element => {
     { id: string; name: string; symbol: string; thumb?: string }[]
   >([]);
 
-  // Pagination state for watchlist table
+
   const [currentPage, setCurrentPage] = React.useState(1);
   const pageSize = 10;
   const totalPages = Math.max(1, Math.ceil(tokens.length / pageSize));
@@ -72,30 +84,27 @@ export const WatchlistSection = (): JSX.Element => {
   const endIndex = startIndex + pageSize;
   const paginatedTokens = tokens.slice(startIndex, endIndex);
 
-  // Keep current page in range when tokens length changes
   React.useEffect(() => {
     if (currentPage > totalPages) {
       setCurrentPage(totalPages);
     }
   }, [tokens.length, totalPages, currentPage]);
 
-React.useEffect(() => {
-  const handleResize = () => {
-    if (window.innerWidth < 768) {
-    
-      setOuterRadius(56);
-    } else if (window.innerWidth >= 820 && window.innerWidth <= 875) {
-       setOuterRadius(60);
-    } else {
-      
-      setOuterRadius(70);
+  React.useEffect(() => {
+    const handleResize = () => {
+      if (window.innerWidth < 768) {
+        setOuterRadius(56);
+      } else if (window.innerWidth >= 820 && window.innerWidth <= 875) {
+         setOuterRadius(60);
+      } else {
+        setOuterRadius(70);
+      }
     }
-  }
-  handleResize();
-  window.addEventListener("resize", handleResize);
+    handleResize();
+    window.addEventListener("resize", handleResize);
 
-  return () => window.removeEventListener("resize", handleResize);
-}, []);
+    return () => window.removeEventListener("resize", handleResize);
+  }, []);
 
   React.useEffect(() => {
     if (tokens.length === 0) {
@@ -124,9 +133,7 @@ React.useEffect(() => {
 
   const handleRefreshPrices = () => {
     // Try CoinGecko-backed refresh first; fallback to simulation
-    dispatch(refreshPricesFromCoinGecko())
-      .unwrap()
-      .catch(() => dispatch(refreshPrices()));
+    dispatch(refreshPricesFromCoinGecko()).unwrap().catch(() => dispatch(refreshPrices()));
   };
 
   const handleRemoveToken = (tokenId: string) => {
@@ -166,7 +173,7 @@ React.useEffect(() => {
         sparkline_in_7d?: { price: number[] };
       }> = await res.json();
 
-      data.forEach((d) => {
+      data?.forEach((d) => {
         const token: Token = {
           id: d.id,
           coingeckoId: d.id,
@@ -191,9 +198,10 @@ React.useEffect(() => {
 
   // CoinGecko search/trending helpers
   const fetchTrending = async () => {
+    const controller = new AbortController();
     try {
       setTrendingLoading(true);
-      const res = await fetch("https://api.coingecko.com/api/v3/search/trending");
+      const res = await fetch("https://api.coingecko.com/api/v3/search/trending", { signal: controller.signal });
       if (!res.ok) throw new Error("CG trending failed");
       const data: {
         coins: Array<{ item: { id: string; name: string; symbol: string; thumb: string } }>;
@@ -205,24 +213,36 @@ React.useEffect(() => {
         thumb: c.item.thumb,
       }));
       setTrendingResults(mapped);
-    } catch {
-      setTrendingResults([]);
+    } catch (err: any) {
+      if (err.name === "AbortError") {
+        // aborted
+      } else {
+        setTrendingResults([]);
+      }
     } finally {
       setTrendingLoading(false);
     }
+    return () => controller.abort();
   };
 
+  // Search logic: uses debouncedSearch, AbortController, and a min-length guard
   React.useEffect(() => {
+    // Guard: don't search for empty or very short queries
+    if (!debouncedSearch || debouncedSearch.trim().length < 3) {
+      setSearchResults([]);
+      setSearchLoading(false);
+      return;
+    }
+
     let active = true;
+    const controller = new AbortController();
+
     const doSearch = async () => {
-      if (!search) {
-        setSearchResults([]);
-        return;
-      }
       try {
         setSearchLoading(true);
         const res = await fetch(
-          `https://api.coingecko.com/api/v3/search?query=${encodeURIComponent(search)}`
+          `https://api.coingecko.com/api/v3/search?query=${encodeURIComponent(debouncedSearch)}`,
+          { signal: controller.signal }
         );
         if (!res.ok) throw new Error("CG search failed");
         const data: { coins: Array<{ id: string; name: string; symbol: string; thumb: string }> } =
@@ -235,21 +255,24 @@ React.useEffect(() => {
           thumb: c.thumb,
         }));
         setSearchResults(mapped);
-      } catch {
-        if (active) {
-          setSearchResults([]);
+      } catch (err: any) {
+        if (err.name === "AbortError") {
+          // aborted — do nothing
+        } else {
+          if (active) setSearchResults([]);
         }
       } finally {
-        if (active) {
-          setSearchLoading(false);
-        }
+        if (active) setSearchLoading(false);
       }
     };
+
     void doSearch();
+
     return () => {
       active = false;
+      controller.abort();
     };
-  }, [search]);
+  }, [debouncedSearch]);
 
   return (
     <div className="flex flex-col items-start gap-6 md:gap-12 w-full">
@@ -402,8 +425,7 @@ React.useEffect(() => {
                     <div
                       className={` ${
                         token.change24h >= 0 ? "text-green-400" : "text-red-400"
-                      }`}
-                    >
+                      }`}>
                       {token.change24h >= 0 ? "+" : ""}
                       {token.change24h.toFixed(2)}%
                     </div>
@@ -537,7 +559,7 @@ React.useEffect(() => {
         }
       >
         <div className="py-1">
-          {search ? (
+          {debouncedSearch.trim().length >= 3 ? (
             searchLoading ? (
               <div className="px-4 py-6 text-center text-zinc-500 text-sm">Searching…</div>
             ) : searchResults.length === 0 ? (
@@ -572,16 +594,16 @@ React.useEffect(() => {
                     </div>
                     <div className="flex items-center gap-2">
                       <StarIcon
-                        className="w-4 h-4"
+                        className="w-4 h-4 cursor-pointer"
                         color={selected ? "#a9e851" : "#52525b"}
                         fill={selected ? "#a9e851" : "transparent"}
                       />
                       {alreadyAdded ? (
                         <span className="text-xs text-zinc-500">Added</span>
                       ) : selected ? (
-                        <CircleIcon fill="#a9e851" className="w-5 h-5 text-[#a9e851]" />
+                        <CircleIcon fill="#a9e851" className="w-5 h-5 cursor-pointer text-[#a9e851]" />
                       ) : (
-                        <CircleIcon className="w-5 h-5 text-zinc-500" />
+                        <CircleIcon className="w-5 h-5 text-zinc-500 cursor-pointer" />
                       )}
                     </div>
                   </button>
@@ -590,6 +612,9 @@ React.useEffect(() => {
             )
           ) : (
             <>
+              {search.length > 0 ? (
+                <div className="px-4 pt-2 text-zinc-500 text-xs">Type at least 3 characters to search</div>
+              ) : null}
               <div className="px-4 py-2 text-zinc-400 text-xs uppercase tracking-wider">Trending</div>
               {trendingLoading ? (
                 <div className="px-4 py-6 text-center text-zinc-500 text-sm">Loading trending…</div>

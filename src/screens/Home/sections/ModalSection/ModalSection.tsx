@@ -30,6 +30,11 @@ export const ModalSection: React.FC<ModalProps> = ({
 }) => {
   const previouslyFocusedRef = React.useRef<HTMLElement | null>(null);
   const containerRef = React.useRef<HTMLDivElement | null>(null);
+  const onCloseRef = React.useRef(onClose);
+
+  React.useEffect(() => {
+    onCloseRef.current = onClose;
+  }, [onClose]);
 
   React.useEffect(() => {
     if (!open) return;
@@ -43,7 +48,7 @@ export const ModalSection: React.FC<ModalProps> = ({
     const onKeyDown = (e: KeyboardEvent) => {
       if (closeOnEsc && e.key === "Escape") {
         e.stopPropagation();
-        onClose();
+        onCloseRef.current?.();
       }
     };
     window.addEventListener("keydown", onKeyDown);
@@ -53,7 +58,7 @@ export const ModalSection: React.FC<ModalProps> = ({
       window.removeEventListener("keydown", onKeyDown);
       previouslyFocusedRef.current?.focus?.();
     };
-  }, [open, onClose, closeOnEsc]);
+  }, [open, closeOnEsc]);
 
   if (!open) return null;
 
@@ -87,27 +92,7 @@ export const ModalSection: React.FC<ModalProps> = ({
             <div className="text-zinc-100 text-sm font-medium flex-1 truncate">
               {title}
             </div>
-            {showCloseButton && (
-              <button
-                onClick={onClose}
-                className="ml-3 inline-flex h-8 w-8 items-center justify-center rounded-md text-zinc-400 hover:text-zinc-200 hover:bg-[#2a2a2e] focus:outline-none"
-                aria-label="Close"
-              >
-                <svg
-                  xmlns="http://www.w3.org/2000/svg"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="2"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  className="h-4 w-4"
-                >
-                  <line x1="18" y1="6" x2="6" y2="18" />
-                  <line x1="6" y1="6" x2="18" y2="18" />
-                </svg>
-              </button>
-            )}
+            
           </div>
         )}
 
