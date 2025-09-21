@@ -1,6 +1,6 @@
 import type { JSX } from "react";
 
-const Spinner = (): JSX.Element => {
+export const Spinner = (): JSX.Element => {
   return (
     <div className="flex items-center justify-center h-screen w-screen">
       <div className="flex items-center gap-2 text-zinc-400 p-4">
@@ -14,5 +14,4 @@ const Spinner = (): JSX.Element => {
   );
 };
 
-export default Spinner;
 
