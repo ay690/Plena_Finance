@@ -34,18 +34,39 @@ Token portfolio dashboard built with React, TypeScript, Vite, and Tailwind CSS. 
 - `vite.config.ts` — Vite plugins and path alias.
 - `public/` — Static assets (favicon, etc.).
 
-## Getting started
+## Getting Started
 
-### Prerequisites
+- **Clone the repository**
 
-- Node.js 18+ (LTS recommended)
-- npm (project includes `package-lock.json`)
+```bash
+git clone https://github.com/ay690/Plena_Finance.git
+cd Plena_Finance
+```
 
-### Installation
+- **Install dependencies**
 
 ```bash
 npm install
+# or
+yarn
 ```
+
+- **Run the development server**
+
+```bash
+npm run dev
+# or
+yarn dev
+```
+
+- **Access the application**
+
+- Open your browser and navigate to http://localhost:5173 to view the application.
+
+### Prerequisites
+- React 19+
+- Node.js 18+ (LTS recommended)
+- npm (project includes `package-lock.json`)
 
 ### Environment variables
 
