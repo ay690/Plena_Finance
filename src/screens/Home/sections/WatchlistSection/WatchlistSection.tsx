@@ -11,7 +11,7 @@ import {
 } from "lucide-react";
 import React from "react";
 import { useAppSelector, useAppDispatch } from "../../../../hooks/redux";
-import { refreshPrices, removeToken, setTokens, addToken, type Token } from "../../../../store/slices/portfolioSlice";
+import { refreshPricesFromCoinGecko, refreshPrices, removeToken, setTokens, addToken, type Token } from "../../../../store/slices/portfolioSlice";
 import { EditableCell } from "../../../../components/EditableCell";
 import { MiniSparkline } from "../../../../components/MiniSparkline";
 import { PortfolioDonutChart } from "../../../../components/PortfolioDonutChart";
@@ -55,11 +55,19 @@ export const WatchlistSection = (): JSX.Element => {
   const [search, setSearch] = React.useState("");
   const [selectedIds, setSelectedIds] = React.useState<string[]>([]);
   const [outerRadius, setOuterRadius] = React.useState(75);
+  const [searchLoading, setSearchLoading] = React.useState(false);
+  const [trendingLoading, setTrendingLoading] = React.useState(false);
+  const [searchResults, setSearchResults] = React.useState<
+    { id: string; name: string; symbol: string; thumb?: string }[]
+  >([]);
+  const [trendingResults, setTrendingResults] = React.useState<
+    { id: string; name: string; symbol: string; thumb?: string }[]
+  >([]);
 
 React.useEffect(() => {
   const handleResize = () => {
     if (window.innerWidth < 768) {
-     
+    
       setOuterRadius(56);
     } else if (window.innerWidth >= 820 && window.innerWidth <= 875) {
        setOuterRadius(60);
@@ -80,6 +88,14 @@ React.useEffect(() => {
     }
   }, [dispatch, tokens.length]);
 
+  // Auto-refresh prices periodically
+  React.useEffect(() => {
+    const interval = window.setInterval(() => {
+      dispatch(refreshPricesFromCoinGecko());
+    }, 60_000);
+    return () => window.clearInterval(interval);
+  }, [dispatch]);
+
   const portfolioTotal = tokens.reduce(
     (sum, token) => sum + token.holdings * token.price,
     0
@@ -92,7 +108,10 @@ React.useEffect(() => {
     }));
 
   const handleRefreshPrices = () => {
-    dispatch(refreshPrices());
+    // Try CoinGecko-backed refresh first; fallback to simulation
+    dispatch(refreshPricesFromCoinGecko())
+      .unwrap()
+      .catch(() => dispatch(refreshPrices()));
   };
 
   const handleRemoveToken = (tokenId: string) => {
@@ -107,21 +126,115 @@ React.useEffect(() => {
     setSelectedIds([]);
     setSearch("");
     setIsAddModalOpen(true);
+    // Load trending on open
+    void fetchTrending();
   };
 
   const closeAddModal = () => setIsAddModalOpen(false);
 
-  const handleConfirmAdd = () => {
-    setIsAddModalOpen(false);
+  const handleConfirmAdd = async () => {
+    if (selectedIds.length === 0) return;
+    try {
+      // Fetch market data for selected ids from CoinGecko
+      const url = `https://api.coingecko.com/api/v3/coins/markets?vs_currency=usd&ids=${encodeURIComponent(
+        selectedIds.join(",")
+      )}&sparkline=true&price_change_percentage=24h`;
+      const res = await fetch(url);
+      if (!res.ok) throw new Error("Failed to fetch market data");
+      const data: Array<{
+        id: string;
+        symbol: string;
+        name: string;
+        image: string;
+        current_price: number;
+        price_change_percentage_24h: number;
+        sparkline_in_7d?: { price: number[] };
+      }> = await res.json();
+
+      data.forEach((d) => {
+        const token: Token = {
+          id: d.id,
+          coingeckoId: d.id,
+          icon: d.image,
+          name: d.name,
+          symbol: d.symbol.toUpperCase(),
+          price: d.current_price,
+          change24h: d.price_change_percentage_24h ?? 0,
+          sparklineData: d.sparkline_in_7d?.price?.slice(-7) ?? [],
+          holdings: 0,
+        };
+        dispatch(addToken(token));
+      });
+    } catch {
+      // silent failover
+    } finally {
+      setIsAddModalOpen(false);
+    }
   };
 
   const existingIds = new Set(tokens.map((t) => t.id));
-  const catalogTokens: Token[] = mockTokens as Token[];
-  const filteredCatalog = catalogTokens.filter(
-    (t) =>
-      t.name.toLowerCase().includes(search.toLowerCase()) ||
-      t.symbol.toLowerCase().includes(search.toLowerCase())
-  );
+
+  // CoinGecko search/trending helpers
+  const fetchTrending = async () => {
+    try {
+      setTrendingLoading(true);
+      const res = await fetch("https://api.coingecko.com/api/v3/search/trending");
+      if (!res.ok) throw new Error("CG trending failed");
+      const data: {
+        coins: Array<{ item: { id: string; name: string; symbol: string; thumb: string } }>;
+      } = await res.json();
+      const mapped = data.coins.map((c) => ({
+        id: c.item.id,
+        name: c.item.name,
+        symbol: c.item.symbol,
+        thumb: c.item.thumb,
+      }));
+      setTrendingResults(mapped);
+    } catch {
+      setTrendingResults([]);
+    } finally {
+      setTrendingLoading(false);
+    }
+  };
+
+  React.useEffect(() => {
+    let active = true;
+    const doSearch = async () => {
+      if (!search) {
+        setSearchResults([]);
+        return;
+      }
+      try {
+        setSearchLoading(true);
+        const res = await fetch(
+          `https://api.coingecko.com/api/v3/search?query=${encodeURIComponent(search)}`
+        );
+        if (!res.ok) throw new Error("CG search failed");
+        const data: { coins: Array<{ id: string; name: string; symbol: string; thumb: string }> } =
+          await res.json();
+        if (!active) return;
+        const mapped = data.coins.map((c) => ({
+          id: c.id,
+          name: c.name,
+          symbol: c.symbol,
+          thumb: c.thumb,
+        }));
+        setSearchResults(mapped);
+      } catch {
+        if (active) {
+          setSearchResults([]);
+        }
+      } finally {
+        if (active) {
+          setSearchLoading(false);
+        }
+      }
+    };
+    void doSearch();
+    return () => {
+      active = false;
+    };
+  }, [search]);
 
   return (
     <div className="flex flex-col items-start gap-6 md:gap-12 w-full">
@@ -405,59 +518,111 @@ React.useEffect(() => {
         }
       >
         <div className="py-1">
-          {filteredCatalog.length === 0 ? (
-            <div className="px-4 py-6 text-center text-zinc-500 text-sm">
-              No tokens found.
-            </div>
-          ) : (
-            filteredCatalog.map((t) => {
-              const alreadyAdded = existingIds.has(t.id);
-              const selected = selectedIds.includes(t.id) || alreadyAdded;
-              return (
-                <button
-                  key={t.id}
-                  onClick={() => {
-                    if (alreadyAdded) {
-                      // remove immediately
-                      dispatch(removeToken(t.id));
-                      setSelectedIds((prev) => prev.filter((x) => x !== t.id));
-                    } else {
-                      // add immediately
-                      dispatch(addToken(t as Token));
+          {search ? (
+            searchLoading ? (
+              <div className="px-4 py-6 text-center text-zinc-500 text-sm">Searching…</div>
+            ) : searchResults.length === 0 ? (
+              <div className="px-4 py-6 text-center text-zinc-500 text-sm">No tokens found.</div>
+            ) : (
+              searchResults.map((t) => {
+                const alreadyAdded = existingIds.has(t.id);
+                const selected = selectedIds.includes(t.id);
+                return (
+                  <button
+                    key={t.id}
+                    onClick={() => {
+                      if (alreadyAdded) return; // prevent selecting already-added tokens
                       setSelectedIds((prev) =>
-                        prev.includes(t.id) ? prev : [...prev, t.id]
+                        prev.includes(t.id)
+                          ? prev.filter((x) => x !== t.id)
+                          : [...prev, t.id]
                       );
-                    }
-                  }}
-                  className={`w-full text-left px-4 py-3 flex items-center gap-3 hover:bg-[#26262a] ${
-                    selected ? "bg-[#25331c]" : ""
-                  }`}
-                >
-                  <div
-                    className="w-8 h-8 rounded border-[0.5px] border-solid border-[#ffffff1a]"
-                    style={{ background: `url(${t.icon}) 50% 50% / cover` }}
-                  />
-                  <div className="flex-1">
-                    <div className="text-zinc-100 text-sm">
-                      {t.name} <span className="text-zinc-400">({t.symbol})</span>
-                    </div>
-                  </div>
-                  {/* star + radio indicator */}
-                  <div className="flex items-center gap-2">
-                    <StarIcon
-                      className="w-4 h-4 cursor-pointer"
-                      color={selected ? "#a9e851" : "#52525b"}
-                      fill={selected ? "#a9e851" : "transparent"}
+                    }}
+                    className={`w-full text-left px-4 py-3 flex items-center gap-3 hover:bg-[#26262a] ${
+                      selected ? "bg-[#25331c]" : ""
+                    }`}
+                  >
+                    <div
+                      className="w-8 h-8 rounded border-[0.5px] border-solid border-[#ffffff1a]"
+                      style={{ background: `url(${t.thumb}) 50% 50% / cover` }}
                     />
-                    {selected ? (
-                      <CircleIcon fill="#a9e851" className="w-5 h-5 text-[#a9e851] cursor-pointer" />
-                    ) : (
-                      <CircleIcon className="w-5 h-5 text-zinc-500 cursor-pointer" />
-                    )}
-                  </div>
-                </button>
-              );
-            })
+                    <div className="flex-1">
+                      <div className="text-zinc-100 text-sm">
+                        {t.name} <span className="text-zinc-400">({t.symbol.toUpperCase()})</span>
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <StarIcon
+                        className="w-4 h-4"
+                        color={selected ? "#a9e851" : "#52525b"}
+                        fill={selected ? "#a9e851" : "transparent"}
+                      />
+                      {alreadyAdded ? (
+                        <span className="text-xs text-zinc-500">Added</span>
+                      ) : selected ? (
+                        <CircleIcon fill="#a9e851" className="w-5 h-5 text-[#a9e851]" />
+                      ) : (
+                        <CircleIcon className="w-5 h-5 text-zinc-500" />
+                      )}
+                    </div>
+                  </button>
+                );
+              })
+            )
+          ) : (
+            <>
+              <div className="px-4 py-2 text-zinc-400 text-xs uppercase tracking-wider">Trending</div>
+              {trendingLoading ? (
+                <div className="px-4 py-6 text-center text-zinc-500 text-sm">Loading trending…</div>
+              ) : trendingResults.length === 0 ? (
+                <div className="px-4 py-6 text-center text-zinc-500 text-sm">No trending tokens</div>
+              ) : (
+                trendingResults.map((t) => {
+                  const alreadyAdded = existingIds.has(t.id);
+                  const selected = selectedIds.includes(t.id);
+                  return (
+                    <button
+                      key={t.id}
+                      onClick={() => {
+                        if (alreadyAdded) return;
+                        setSelectedIds((prev) =>
+                          prev.includes(t.id)
+                            ? prev.filter((x) => x !== t.id)
+                            : [...prev, t.id]
+                        );
+                      }}
+                      className={`w-full text-left px-4 py-3 flex items-center gap-3 hover:bg-[#26262a] ${
+                        selected ? "bg-[#25331c]" : ""
+                      }`}
+                    >
+                      <div
+                        className="w-8 h-8 rounded border-[0.5px] border-solid border-[#ffffff1a]"
+                        style={{ background: `url(${t.thumb}) 50% 50% / cover` }}
+                      />
+                      <div className="flex-1">
+                        <div className="text-zinc-100 text-sm">
+                          {t.name} <span className="text-zinc-400">({t.symbol.toUpperCase()})</span>
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <StarIcon
+                          className="w-4 h-4"
+                          color={selected ? "#a9e851" : "#52525b"}
+                          fill={selected ? "#a9e851" : "transparent"}
+                        />
+                        {alreadyAdded ? (
+                          <span className="text-xs text-zinc-500">Added</span>
+                        ) : selected ? (
+                          <CircleIcon fill="#a9e851" className="w-5 h-5 text-[#a9e851]" />
+                        ) : (
+                          <CircleIcon className="w-5 h-5 text-zinc-500" />
+                        )}
+                      </div>
+                    </button>
+                  );
+                })
+              )}
+            </>
           )}
         </div>
       </ModalSection>

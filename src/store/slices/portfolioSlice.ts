@@ -11,6 +11,8 @@ export interface Token {
   change24h: number;
   sparklineData: number[];
   holdings: number;
+  // Optional CoinGecko identifier for fetching live data
+  coingeckoId?: string;
 }
 
 interface PortfolioState {
@@ -19,11 +21,29 @@ interface PortfolioState {
   isLoading: boolean;
 }
 
-const initialState: PortfolioState = {
-  tokens: [],
-  lastUpdated: "-",
-  isLoading: false,
+// Read persisted state from localStorage (if present)
+const loadPersisted = (): PortfolioState | null => {
+  try {
+    if (typeof window === "undefined") return null;
+    const raw = localStorage.getItem("portfolio_state");
+    if (!raw) return null;
+    const parsed = JSON.parse(raw) as Partial<PortfolioState>;
+    return {
+      tokens: parsed.tokens ?? [],
+      lastUpdated: parsed.lastUpdated ?? "-",
+      isLoading: false,
+    } as PortfolioState;
+  } catch {
+    return null;
+  }
 };
+
+const initialState: PortfolioState =
+  loadPersisted() ?? {
+    tokens: [],
+    lastUpdated: "-",
+    isLoading: false,
+  };
 
 // Async thunk to refresh prices (simulates an API call)
 export const refreshPrices = createAsyncThunk<
@@ -54,6 +74,59 @@ export const refreshPrices = createAsyncThunk<
   });
 
   return updated;
+});
+
+// Attempt to refresh prices using CoinGecko for tokens that have a coingeckoId
+export const refreshPricesFromCoinGecko = createAsyncThunk<
+  Token[],
+  void,
+  { state: RootState }
+>("portfolio/refreshPricesFromCoinGecko", async (_: void, { getState }) => {
+  const { tokens } = getState().portfolio;
+  const ids = tokens
+    .map((t) => t.coingeckoId || t.id)
+    .filter((id) => typeof id === "string")
+    .join(",");
+
+  if (!ids) return tokens;
+
+  const url = `https://api.coingecko.com/api/v3/coins/markets?vs_currency=usd&ids=${encodeURIComponent(
+    ids
+  )}&sparkline=true&price_change_percentage=24h`;
+
+  try {
+    const res = await fetch(url);
+    if (!res.ok) throw new Error("CG error");
+    const data: Array<{
+      id: string;
+      symbol: string;
+      name: string;
+      image: string;
+      current_price: number;
+      price_change_percentage_24h: number;
+      sparkline_in_7d?: { price: number[] };
+    }> = await res.json();
+
+    const map = new Map(data.map((d) => [d.id, d]));
+    const updated: Token[] = tokens.map((t) => {
+      const key = t.coingeckoId || t.id;
+      const d = map.get(key);
+      if (!d) return t;
+      const spark = d.sparkline_in_7d?.price ?? t.sparklineData;
+      return {
+        ...t,
+        icon: d.image || t.icon,
+        price: d.current_price,
+        change24h: d.price_change_percentage_24h ?? t.change24h,
+        sparklineData: spark.slice(-7),
+      };
+    });
+
+    return updated;
+  } catch {
+    // fallback to existing tokens if network fails
+    return tokens;
+  }
 });
 
 const portfolioSlice = createSlice({
@@ -96,6 +169,17 @@ const portfolioSlice = createSlice({
         state.lastUpdated = new Date().toLocaleTimeString();
       })
       .addCase(refreshPrices.rejected, (state) => {
+        state.isLoading = false;
+      })
+      .addCase(refreshPricesFromCoinGecko.pending, (state) => {
+        state.isLoading = true;
+      })
+      .addCase(refreshPricesFromCoinGecko.fulfilled, (state, action) => {
+        state.tokens = action.payload;
+        state.isLoading = false;
+        state.lastUpdated = new Date().toLocaleTimeString();
+      })
+      .addCase(refreshPricesFromCoinGecko.rejected, (state) => {
         state.isLoading = false;
       });
   },
