@@ -46,14 +46,14 @@ export const EditableCell: React.FC<EditableCellProps> = ({ tokenId, value, isEd
           value={inputValue}
           onChange={(e) => setInputValue(e.target.value)}
           onKeyDown={handleKeyPress}
-          className="bg-transparent border-b border-zinc-600 focus:border-zinc-400 outline-none text-zinc-100 p-2 w-28"
+          className="bg-transparent border rounded-md border-[#a9e851] focus:border-[#a9e851]  outline-none text-zinc-100 p-2 w-28"
           autoFocus
           step="0.0001"
           min="0"
         />
         <Button
           variant="ghost"
-          className="h-7 px-2 py-1 font-light bg-[#a9e851] shadow-[0px_0px_0px_1px_#1f6619,0px_1px_2px_#1f661966,inset_0px_0.75px_0px_#ffffff33] rounded-md cursor-pointer"
+          className="h-7 px-2 py-1 font-normal bg-[#a9e851] text-darkforegroundsfg-on-inverted border-none shadow-[0px_0px_0px_1px_#1f6619,0px_1px_2px_#1f661966,inset_0px_0.75px_0px_#ffffff33] rounded-md cursor-pointer"
           onClick={handleSave}
         >
          Save

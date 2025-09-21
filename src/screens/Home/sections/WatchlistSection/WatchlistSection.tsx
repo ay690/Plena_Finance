@@ -612,7 +612,7 @@ export const WatchlistSection = (): JSX.Element => {
             )
           ) : (
             <>
-              {search.length > 0 ? (
+              {search?.length > 0 ? (
                 <div className="px-4 pt-2 text-zinc-500 text-xs">Type at least 3 characters to search</div>
               ) : null}
               <div className="px-4 py-2 text-zinc-400 text-xs uppercase tracking-wider">Trending</div>
@@ -629,11 +629,7 @@ export const WatchlistSection = (): JSX.Element => {
                       key={t.id}
                       onClick={() => {
                         if (alreadyAdded) return;
-                        setSelectedIds((prev) =>
-                          prev.includes(t.id)
-                            ? prev.filter((x) => x !== t.id)
-                            : [...prev, t.id]
-                        );
+                        setSelectedIds((prev) => prev.includes(t.id) ? prev.filter((x) => x !== t.id) : [...prev, t.id]);
                       }}
                       className={`w-full text-left px-4 py-3 flex items-center gap-3 hover:bg-[#26262a] ${
                         selected ? "bg-[#25331c]" : ""
