@@ -1,7 +1,7 @@
 import type { JSX } from "react";
 import React, { Suspense } from "react";
 import { PortfolioSection } from "./Home/sections/PortfolioSection/PortfolioSection";
-import { Spinner } from "@/components/spinner";
+import { Spinner } from "@/components/SpinnerUI";
 
 const WatchlistSection = React.lazy(() =>
   import("./Home/sections/WatchlistSection/WatchlistSection").then((m) => ({
