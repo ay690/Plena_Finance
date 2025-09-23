@@ -12,7 +12,8 @@ import {
 } from "lucide-react";
 import React from "react";
 import { useAppSelector, useAppDispatch } from "../../../../hooks/redux";
-import { refreshPricesFromCoinGecko, refreshPrices, removeToken, setTokens, addToken, type Token } from "../../../../store/slices/portfolioSlice";
+import { refreshPricesFromCoinGecko, refreshPrices, removeToken, addToken, type Token } from "../../../../store/slices/portfolioSlice";
+import * as tokenService from "../../../../services/tokenService";
 import { EditableCell } from "../../../../components/EditableCell";
 import { MiniSparkline } from "../../../../components/MiniSparkline";
 import { PortfolioDonutChart } from "../../../../components/PortfolioDonutChart";
@@ -33,7 +34,6 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "../../../../components/ui/dropdown-menu";
-import { mockTokens } from "@/mockData/mockData";
 import { ModalSection } from "@/screens/Home/sections/ModalSection/ModalSection";
 import { motion } from "framer-motion";
 
@@ -107,12 +107,6 @@ export const WatchlistSection = (): JSX.Element => {
     return () => window.removeEventListener("resize", handleResize);
   }, []);
 
-  React.useEffect(() => {
-    if (tokens.length === 0) {
-      dispatch(setTokens(mockTokens));
-    }
-  }, [dispatch, tokens.length]);
-
   // Auto-refresh prices periodically
   React.useEffect(() => {
     const interval = window.setInterval(() => {
@@ -149,9 +143,38 @@ export const WatchlistSection = (): JSX.Element => {
     setSelectedIds([]);
     setSearch("");
     setIsAddModalOpen(true);
-    // Load trending on open
-    void fetchTrending();
   };
+
+  // Fetch trending tokens on mount
+  React.useEffect(() => {
+    fetchTrending();
+  }, []);
+
+  // Load initial tokens if empty
+  React.useEffect(() => {
+    if (tokens.length === 0) {
+      // Optionally load some default tokens on first load
+      // This is just an example - you might want to load user's saved tokens instead
+      const loadDefaultTokens = async () => {
+        try {
+          const defaultTokenIds = ['bitcoin', 'ethereum', 'solana'];
+          const defaultTokens = await Promise.all(
+            defaultTokenIds.map(id => tokenService.getTokenDetails(id))
+          );
+          defaultTokens.forEach((token: Token) => {
+            // Only add if not already in the list
+            if (!tokens.some(t => t.id === token.id)) {
+              dispatch(addToken(token));
+            }
+          });
+        } catch (error) {
+          console.error('Failed to load default tokens:', error);
+        }
+      };
+      
+      loadDefaultTokens();
+    }
+  }, [dispatch, tokens]);
 
   const closeAddModal = () => setIsAddModalOpen(false);
 
@@ -198,32 +221,40 @@ export const WatchlistSection = (): JSX.Element => {
   const existingIds = new Set(tokens.map((t) => t.id));
 
   // CoinGecko search/trending helpers
-  const fetchTrending = async () => {
-    const controller = new AbortController();
-    try {
-      setTrendingLoading(true);
-      const res = await fetch("https://api.coingecko.com/api/v3/search/trending", { signal: controller.signal });
-      if (!res.ok) throw new Error("CG trending failed");
-      const data: {
-        coins: Array<{ item: { id: string; name: string; symbol: string; thumb: string } }>;
-      } = await res.json();
-      const mapped = data.coins.map((c) => ({
-        id: c.item.id,
-        name: c.item.name,
-        symbol: c.item.symbol,
-        thumb: c.item.thumb,
-      }));
-      setTrendingResults(mapped);
-    } catch (err: any) {
-      if (err.name === "AbortError") {
-        // aborted
-      } else {
-        setTrendingResults([]);
+  // Handle search functionality with debounced input
+  React.useEffect(() => {
+    const searchTokens = async () => {
+      if (!debouncedSearch.trim()) {
+        setSearchResults([]);
+        return;
       }
+
+      setSearchLoading(true);
+      try {
+        const results = await tokenService.searchTokens(debouncedSearch);
+        setSearchResults(results);
+      } catch (error) {
+        console.error('Search failed:', error);
+        // Optionally show error to user
+      } finally {
+        setSearchLoading(false);
+      }
+    };
+
+    searchTokens();
+  }, [debouncedSearch]);
+
+  const fetchTrending = async () => {
+    setTrendingLoading(true);
+    try {
+      const trending = await tokenService.getTrendingTokens();
+      setTrendingResults(trending);
+    } catch (error) {
+      console.error('Failed to fetch trending tokens:', error);
+      // Optionally show error to user
     } finally {
       setTrendingLoading(false);
     }
-    return () => controller.abort();
   };
 
   // Search logic: uses debouncedSearch, AbortController, and a min-length guard
